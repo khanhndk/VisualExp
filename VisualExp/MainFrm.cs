@@ -176,6 +176,9 @@ namespace SVM4C_GUI
 
         private void btnSolve_Click(object sender, EventArgs e)
         {
+            Properties.Settings.Default["cmd"] = txtCommand.Text;
+            Properties.Settings.Default.Save();
+            string exefile = Properties.Settings.Default.exefile;
             ResultPredict.Clear();
 
             StreamWriter writer = new StreamWriter("train.scale.txt");
@@ -196,7 +199,7 @@ namespace SVM4C_GUI
             GenerateTest();
 
             Process p = new Process();
-            p.StartInfo = new ProcessStartInfo("COSVM.exe", txtCommand.Text);
+            p.StartInfo = new ProcessStartInfo(exefile, txtCommand.Text);
             p.Start();
             p.WaitForExit();
 
