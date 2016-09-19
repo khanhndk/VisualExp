@@ -23,12 +23,15 @@ namespace VisualExp.Properties {
             }
         }
         
-        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("")]
         public string cmd {
             get {
                 return ((string)(this["cmd"]));
+            }
+            set {
+                this["cmd"] = value;
             }
         }
         

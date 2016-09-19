@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Configuration;
 using System.Data;
 using System.Diagnostics;
 using System.Drawing;
@@ -36,6 +37,8 @@ namespace VisualExp
         public MainFrm()
         {
             InitializeComponent();
+
+            txtCommand.Text = getAppSetting("cmd");
 
             TrainingSet = new List<Node>();
             ResultPredict = new List<Node>();
@@ -176,9 +179,13 @@ namespace VisualExp
 
         private void btnSolve_Click(object sender, EventArgs e)
         {
-            Properties.Settings.Default["cmd"] = txtCommand.Text;
-            Properties.Settings.Default.Save();
-            string exefile = Properties.Settings.Default.exefile;
+            setAppSetting("cmd", txtCommand.Text);
+            string exefile = getAppSetting("exefile");
+            if (exefile == "")
+            {
+                exefile = "SVM4C.exe";
+                setAppSetting("exefile", exefile);
+            }
             ResultPredict.Clear();
 
             StreamWriter writer = new StreamWriter("train.scale.txt");
@@ -215,6 +222,36 @@ namespace VisualExp
                 TrainingSet = Problem.Read(dlg.FileName);
                 picData.Invalidate();
             }
+        }
+        public string getAppSetting(string key)
+        {
+            //Load the appsettings
+            Configuration config = ConfigurationManager.OpenExeConfiguration(
+                                    System.Reflection.Assembly.GetExecutingAssembly().Location);
+            //Return the value which matches the key
+            if (config.AppSettings.Settings[key] == null)
+            {
+                //If key exists, delete it
+                return "";
+            }
+            return config.AppSettings.Settings[key].Value;
+        }
+
+        public void setAppSetting(string key, string value)
+        {
+            //Load appsettings
+            Configuration config = ConfigurationManager.OpenExeConfiguration(
+                                    System.Reflection.Assembly.GetExecutingAssembly().Location);
+            //Check if key exists in the settings
+            if (config.AppSettings.Settings[key] != null)
+            {
+                //If key exists, delete it
+                config.AppSettings.Settings.Remove(key);
+            }
+            //Add new key-value pair
+            config.AppSettings.Settings.Add(key, value);
+            //Save the changed settings
+            config.Save(ConfigurationSaveMode.Modified);
         }
 
     }
