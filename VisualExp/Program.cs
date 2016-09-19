@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Windows.Forms;
 
-namespace SVM4C_GUI
+namespace VisualExp
 {
     static class Program
     {

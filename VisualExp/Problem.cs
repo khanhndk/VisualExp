@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
-namespace SVM4C_GUI
+namespace VisualExp
 {
     public static class clsStringFunctions
     {

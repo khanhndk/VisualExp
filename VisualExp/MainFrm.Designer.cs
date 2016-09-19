@@ -1,4 +1,4 @@
-﻿namespace SVM4C_GUI
+﻿namespace VisualExp
 {
     partial class MainFrm
     {

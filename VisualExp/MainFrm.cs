@@ -9,7 +9,7 @@ using System.Text;
 using System.Windows.Forms;
 using Ultilities;
 
-namespace SVM4C_GUI
+namespace VisualExp
 {
     struct Node
     {
