@@ -38,6 +38,7 @@
             this.btnSolve = new System.Windows.Forms.Button();
             this.chkMulti = new System.Windows.Forms.CheckBox();
             this.btnLoadData = new System.Windows.Forms.Button();
+            this.chkRegression = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.picData)).BeginInit();
             this.SuspendLayout();
             // 
@@ -122,7 +123,7 @@
             // 
             // btnSolve
             // 
-            this.btnSolve.Location = new System.Drawing.Point(534, 209);
+            this.btnSolve.Location = new System.Drawing.Point(534, 231);
             this.btnSolve.Name = "btnSolve";
             this.btnSolve.Size = new System.Drawing.Size(95, 23);
             this.btnSolve.TabIndex = 7;
@@ -150,11 +151,22 @@
             this.btnLoadData.UseVisualStyleBackColor = true;
             this.btnLoadData.Click += new System.EventHandler(this.btnLoadData_Click);
             // 
+            // chkRegression
+            // 
+            this.chkRegression.AutoSize = true;
+            this.chkRegression.Location = new System.Drawing.Point(534, 199);
+            this.chkRegression.Name = "chkRegression";
+            this.chkRegression.Size = new System.Drawing.Size(79, 17);
+            this.chkRegression.TabIndex = 10;
+            this.chkRegression.Text = "Regression";
+            this.chkRegression.UseVisualStyleBackColor = true;
+            // 
             // MainFrm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(641, 601);
+            this.Controls.Add(this.chkRegression);
             this.Controls.Add(this.btnLoadData);
             this.Controls.Add(this.chkMulti);
             this.Controls.Add(this.btnSolve);
@@ -166,7 +178,7 @@
             this.Controls.Add(this.btnGenerateTest);
             this.Controls.Add(this.picData);
             this.Name = "MainFrm";
-            this.Text = "SVM4C-GUI";
+            this.Text = "VisualExp";
             ((System.ComponentModel.ISupportInitialize)(this.picData)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
@@ -185,6 +197,7 @@
         private System.Windows.Forms.Button btnSolve;
         private System.Windows.Forms.CheckBox chkMulti;
         private System.Windows.Forms.Button btnLoadData;
+        private System.Windows.Forms.CheckBox chkRegression;
     }
 }
 

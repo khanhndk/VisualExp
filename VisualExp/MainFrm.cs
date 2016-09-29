@@ -37,7 +37,7 @@ namespace VisualExp
         public MainFrm()
         {
             InitializeComponent();
-
+            this.Text = getAppSetting("exefile").Split(new char[] { '.' })[0];
             txtCommand.Text = getAppSetting("cmd");
 
             TrainingSet = new List<Node>();
@@ -57,16 +57,28 @@ namespace VisualExp
         private void GenerateTest()
         {
             StreamWriter writer = new StreamWriter("nolabel.txt");
-
-            double x = -1;
-            double y = -1;
-            for (int j = 0; j <= h; j++)
+            if (chkRegression.Checked)
             {
-                y = -1 + j * hStep;
+                double x = -1;
+               
                 for (int i = 0; i <= w; i++)
                 {
                     x = -1 + i * wStep;
-                    writer.WriteLine("? 1:{0} 2:{1}", x, y);
+                    writer.WriteLine("? 1:{0}", x);
+                }
+            }
+            else
+            {
+                double x = -1;
+                double y = -1;
+                for (int j = 0; j <= h; j++)
+                {
+                    y = -1 + j * hStep;
+                    for (int i = 0; i <= w; i++)
+                    {
+                        x = -1 + i * wStep;
+                        writer.WriteLine("? 1:{0} 2:{1}", x, y);
+                    }
                 }
             }
             writer.Close();
@@ -77,13 +89,25 @@ namespace VisualExp
             StreamReader reader = new StreamReader("predict.txt");
             while (!reader.EndOfStream)
             {
-                string[] stArr = reader.ReadLine().Split(new char[] { ' ' });
-                int label = (int)Double.Parse(stArr[0]);
-                double x = Double.Parse(stArr[1].Split(new char[] { ':' })[1]);
-                double y = Double.Parse(stArr[2].Split(new char[] { ':' })[1]);
-                int i = (int)Math.Round(x / wStep, 0);
-                int j = (int)Math.Round(y / hStep, 0);
-                ResultPredict.Add(new Node(i + w / 2, h / 2 - j, label));
+                if (chkRegression.Checked)
+                {
+                    string[] stArr = reader.ReadLine().Split(new char[] { ' ' });
+                    double y = Double.Parse(stArr[0]);
+                    double x = Double.Parse(stArr[1].Split(new char[] { ':' })[1]);
+                    int i = (int)Math.Round(x / wStep, 0);
+                    int j = (int)Math.Round(y / hStep, 0);
+                    ResultPredict.Add(new Node(i + w / 2, h / 2 - j, 1));
+                }
+                else
+                {
+                    string[] stArr = reader.ReadLine().Split(new char[] { ' ' });
+                    int label = (int)Double.Parse(stArr[0]);
+                    double x = Double.Parse(stArr[1].Split(new char[] { ':' })[1]);
+                    double y = Double.Parse(stArr[2].Split(new char[] { ':' })[1]);
+                    int i = (int)Math.Round(x / wStep, 0);
+                    int j = (int)Math.Round(y / hStep, 0);
+                    ResultPredict.Add(new Node(i + w / 2, h / 2 - j, label));
+                }
             }
             reader.Close();
             ReDrawPredict = true;
@@ -137,8 +161,7 @@ namespace VisualExp
                     else
                         c = p.Label == 1 ? BColorMap[1] : BColorMap[2];
                     g.DrawLine(new Pen(c), (int)p.X, (int)p.Y, (int)p.X+1, (int)p.Y);
-                } 
-                
+                }            
             }
             
             foreach (Node p in TrainingSet)
@@ -189,17 +212,25 @@ namespace VisualExp
             ResultPredict.Clear();
 
             StreamWriter writer = new StreamWriter("train.scale.txt");
-            foreach (Node node in TrainingSet)
+            if (chkRegression.Checked)
             {
-                string label = "?";
-                if (node.Label > 0)
+                foreach (Node node in TrainingSet)
+                    writer.WriteLine("{0} 1:{1}", node.Y, node.X);
+            }
+            else
+            {
+                foreach (Node node in TrainingSet)
                 {
-                    if (chkMulti.Checked)
-                        label = Convert.ToString(node.Label - 1);
-                    else
-                        label = node.Label == 1 ? "1" : "-1";
+                    string label = "?";
+                    if (node.Label > 0)
+                    {
+                        if (chkMulti.Checked)
+                            label = Convert.ToString(node.Label - 1);
+                        else
+                            label = node.Label == 1 ? "1" : "-1";
+                    }
+                    writer.WriteLine("{0} 1:{1} 2:{2}", label, node.X, node.Y);
                 }
-                writer.WriteLine("{0} 1:{1} 2:{2}", label, node.X, node.Y);
             }
             writer.Close();
 
