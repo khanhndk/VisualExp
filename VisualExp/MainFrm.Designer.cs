@@ -44,6 +44,7 @@
             // 
             // picData
             // 
+            this.picData.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.picData.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.picData.Location = new System.Drawing.Point(12, 91);
             this.picData.Name = "picData";
@@ -55,6 +56,7 @@
             // 
             // btnGenerateTest
             // 
+            this.btnGenerateTest.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.btnGenerateTest.Location = new System.Drawing.Point(534, 510);
             this.btnGenerateTest.Name = "btnGenerateTest";
             this.btnGenerateTest.Size = new System.Drawing.Size(95, 23);
@@ -65,6 +67,7 @@
             // 
             // btnLoadPredict
             // 
+            this.btnLoadPredict.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.btnLoadPredict.Location = new System.Drawing.Point(534, 568);
             this.btnLoadPredict.Name = "btnLoadPredict";
             this.btnLoadPredict.Size = new System.Drawing.Size(95, 23);
@@ -75,6 +78,7 @@
             // 
             // btnLoadTest
             // 
+            this.btnLoadTest.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.btnLoadTest.Location = new System.Drawing.Point(534, 539);
             this.btnLoadTest.Name = "btnLoadTest";
             this.btnLoadTest.Size = new System.Drawing.Size(95, 23);
@@ -85,6 +89,7 @@
             // 
             // cbColor
             // 
+            this.cbColor.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.cbColor.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cbColor.FormattingEnabled = true;
             this.cbColor.Items.AddRange(new object[] {
@@ -99,6 +104,7 @@
             // 
             // cbType
             // 
+            this.cbType.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.cbType.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cbType.FormattingEnabled = true;
             this.cbType.Items.AddRange(new object[] {
@@ -112,6 +118,8 @@
             // 
             // txtCommand
             // 
+            this.txtCommand.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left)));
             this.txtCommand.Font = new System.Drawing.Font("Consolas", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtCommand.Location = new System.Drawing.Point(12, 12);
             this.txtCommand.Multiline = true;
@@ -123,6 +131,7 @@
             // 
             // btnSolve
             // 
+            this.btnSolve.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.btnSolve.Location = new System.Drawing.Point(534, 231);
             this.btnSolve.Name = "btnSolve";
             this.btnSolve.Size = new System.Drawing.Size(95, 23);
@@ -133,6 +142,7 @@
             // 
             // chkMulti
             // 
+            this.chkMulti.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.chkMulti.AutoSize = true;
             this.chkMulti.Location = new System.Drawing.Point(534, 176);
             this.chkMulti.Name = "chkMulti";
@@ -143,6 +153,7 @@
             // 
             // btnLoadData
             // 
+            this.btnLoadData.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.btnLoadData.Location = new System.Drawing.Point(534, 93);
             this.btnLoadData.Name = "btnLoadData";
             this.btnLoadData.Size = new System.Drawing.Size(95, 23);
@@ -153,6 +164,7 @@
             // 
             // chkRegression
             // 
+            this.chkRegression.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.chkRegression.AutoSize = true;
             this.chkRegression.Location = new System.Drawing.Point(534, 199);
             this.chkRegression.Name = "chkRegression";

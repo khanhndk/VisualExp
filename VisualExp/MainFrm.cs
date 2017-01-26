@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Text;
+using System.Threading;
 using System.Windows.Forms;
 using Ultilities;
 
@@ -23,6 +24,7 @@ namespace VisualExp
     {
         List<Node> TrainingSet;
         List<Node> ResultPredict;
+        List<Node> DrawSet;
 
         Color[] FColorMap;
         Color[] BColorMap;
@@ -38,12 +40,17 @@ namespace VisualExp
         {
             InitializeComponent();
             this.Text = getAppSetting("exefile").Split(new char[] { '.' })[0];
+            if (this.Text == "")
+                this.Text = "VisualExp";
             txtCommand.Text = getAppSetting("cmd");
 
             TrainingSet = new List<Node>();
             ResultPredict = new List<Node>();
+            DrawSet = new List<Node>();
 
-            FColorMap = new Color[4] { Color.Black, Color.Red, Color.Green, Color.Blue };
+            FColorMap = new Color[12] { Color.Black, Color.Red, Color.Green, Color.Blue,
+                                        Color.Magenta, Color.Gold, Color.Brown, Color.Purple,
+                                        Color.Chocolate, Color.GhostWhite, Color.LightPink, Color.Salmon};
             BColorMap = new Color[4] { Color.Gray, Color.DarkRed, Color.DarkGreen, Color.DarkBlue };
             cbColor.SelectedIndex = 0;
             cbType.SelectedIndex = 0;
@@ -52,6 +59,29 @@ namespace VisualExp
             b = new Bitmap(w + 1, h + 1);
             wStep = 2.0 / w;
             hStep = 2.0 / h;
+
+            if (Config.args.Contains("-preload"))
+            {
+                chkMulti.Checked = true;
+                LoadTrain();
+                picData.Refresh();
+            }
+            else
+            {
+                if (Config.args.Contains("-drawpredict"))
+                {
+                    chkMulti.Checked = true;
+                    LoadTrain();
+                    LoadPredict();
+                    picData.Refresh();
+                }
+                if (Config.args.Contains("-drawmarker"))
+                {
+                    LoadDraw();
+                    picData.Refresh();
+                }
+            }
+
         }
 
         private void GenerateTest()
@@ -64,7 +94,7 @@ namespace VisualExp
                 for (int i = 0; i <= w; i++)
                 {
                     x = -1 + i * wStep;
-                    writer.WriteLine("? 1:{0}", x);
+                    writer.WriteLine("0 1:{0}", x);
                 }
             }
             else
@@ -77,7 +107,7 @@ namespace VisualExp
                     for (int i = 0; i <= w; i++)
                     {
                         x = -1 + i * wStep;
-                        writer.WriteLine("? 1:{0} 2:{1}", x, y);
+                        writer.WriteLine("0 1:{0} 2:{1}", x, y);
                     }
                 }
             }
@@ -102,11 +132,66 @@ namespace VisualExp
                 {
                     string[] stArr = reader.ReadLine().Split(new char[] { ' ' });
                     int label = (int)Double.Parse(stArr[0]);
-                    double x = Double.Parse(stArr[1].Split(new char[] { ':' })[1]);
-                    double y = Double.Parse(stArr[2].Split(new char[] { ':' })[1]);
+                    double x, y;
+                    if (Double.Parse(stArr[1].Split(new char[] { ':' })[0]) == 1)
+                    {
+                        x = Double.Parse(stArr[1].Split(new char[] { ':' })[1]);
+                        if ((stArr.Length > 2) && (stArr[2].Trim() != ""))
+                            y = Double.Parse(stArr[2].Split(new char[] { ':' })[1]);
+                        else
+                            y = 0;
+                    }
+                    else
+                    {
+                        x = 0;
+                        y = Double.Parse(stArr[1].Split(new char[] { ':' })[1]);
+                    }
+
                     int i = (int)Math.Round(x / wStep, 0);
                     int j = (int)Math.Round(y / hStep, 0);
                     ResultPredict.Add(new Node(i + w / 2, h / 2 - j, label));
+                }
+            }
+            reader.Close();
+            ReDrawPredict = true;
+        }
+
+        private void LoadDraw()
+        {
+            StreamReader reader = new StreamReader("draw.txt");
+            DrawSet.Clear();
+            while (!reader.EndOfStream)
+            {
+                if (chkRegression.Checked)
+                {
+                    string[] stArr = reader.ReadLine().Split(new char[] { ' ' });
+                    double y = Double.Parse(stArr[0]);
+                    double x = Double.Parse(stArr[1].Split(new char[] { ':' })[1]);
+                    int i = (int)Math.Round(x / wStep, 0);
+                    int j = (int)Math.Round(y / hStep, 0);
+                    DrawSet.Add(new Node(i + w / 2, h / 2 - j, 1));
+                }
+                else
+                {
+                    string[] stArr = reader.ReadLine().Split(new char[] { ' ' });
+                    int label = (int)Double.Parse(stArr[0]);
+                    double x, y;
+                    if (Double.Parse(stArr[1].Split(new char[] { ':' })[0]) == 1)
+                    {
+                        x = Double.Parse(stArr[1].Split(new char[] { ':' })[1]);
+                        if ((stArr.Length > 2) && (stArr[2].Trim() != ""))
+                            y = Double.Parse(stArr[2].Split(new char[] { ':' })[1]);
+                        else
+                            y = 0;
+                    }
+                    else
+                    {
+                        x = 0;
+                        y = Double.Parse(stArr[1].Split(new char[] { ':' })[1]);
+                    }
+                    int i = (int)Math.Round(x / wStep, 0);
+                    int j = (int)Math.Round(y / hStep, 0);
+                    DrawSet.Add(new Node(i + w / 2, h / 2 - j, label));
                 }
             }
             reader.Close();
@@ -124,33 +209,40 @@ namespace VisualExp
             picData.Refresh();
         }
 
-        private void btnLoadTest_Click(object sender, EventArgs e)
+        private void LoadTrain()
         {
             int w = picData.Size.Width;
             int h = picData.Size.Height;
             double wStep = 2.0 / w;
             double hStep = 2.0 / h;
             Graphics g = Graphics.FromImage(b);
-            StreamReader reader = new StreamReader("draw.scale.txt");
+            StreamReader reader = new StreamReader("train.scale.txt");
             while (!reader.EndOfStream)
             {
                 string[] stArr = reader.ReadLine().Split(new char[] { ' ' });
                 int label = (int)Double.Parse(stArr[0]);
                 double x = Double.Parse(stArr[1].Split(new char[] { ':' })[1]);
                 double y = Double.Parse(stArr[2].Split(new char[] { ':' })[1]);
-                int i = (int)Math.Round(x / wStep, 0);
-                int j = (int)Math.Round(y / hStep, 0);
-                Color c = label > 0 ? Color.Red : Color.Green;
-                g.DrawEllipse(new Pen(c), i + w / 2 - 2, h / 2 + j - 2, 4, 4);
+                //int i = (int)Math.Round(x / wStep, 0);
+                //int j = (int)Math.Round(y / hStep, 0);
+                TrainingSet.Add(new Node(x, y, label + 1));
+                //Color c = label > 0 ? Color.Red : Color.Green;
+                //g.DrawEllipse(new Pen(c), i + w / 2 - 2, h / 2 + j - 2, 4, 4);
             }
-            picData.Image = b;
+            //picData.Image = b;
             reader.Close();
+        }
+
+        private void btnLoadTest_Click(object sender, EventArgs e)
+        {
+            LoadTrain();
+            picData.Refresh();
         }
 
         private void picData_Paint(object sender, PaintEventArgs e)
         {
             Graphics g = e.Graphics;
-            if (ReDrawPredict)
+            //if (ReDrawPredict)
             {
                 ReDrawPredict = false;
                 foreach (Node p in ResultPredict)
@@ -160,10 +252,10 @@ namespace VisualExp
                         c = BColorMap[p.Label + 1];
                     else
                         c = p.Label == 1 ? BColorMap[1] : BColorMap[2];
-                    g.DrawLine(new Pen(c), (int)p.X, (int)p.Y, (int)p.X+1, (int)p.Y);
-                }            
+                    g.DrawLine(new Pen(c), (int)p.X, (int)p.Y, (int)p.X + 1, (int)p.Y);
+                }
             }
-            
+
             foreach (Node p in TrainingSet)
             {
                 int i = (int)Math.Round(p.X / wStep, 0);
@@ -171,7 +263,14 @@ namespace VisualExp
                 g.DrawEllipse(new Pen(FColorMap[p.Label]), i + w / 2 - 2, h / 2 - j - 2, 4, 4);
             }
 
+            foreach (Node p in DrawSet)
+            {
+                g.FillRectangle(new SolidBrush(FColorMap[p.Label+1]),
+                    (int)p.X - 3, (int)p.Y - 3, 6, 6);
+            }
+
         }
+        
 
         private void picData_MouseUp(object sender, MouseEventArgs e)
         {
@@ -206,8 +305,11 @@ namespace VisualExp
             string exefile = getAppSetting("exefile");
             if (exefile == "")
             {
-                exefile = "SVM4C.exe";
-                setAppSetting("exefile", exefile);
+                if(!txtCommand.Text.Split(new char[] { ' ' })[0].Contains(".exe"))
+                {
+                    exefile = "SVM4C.exe";
+                    setAppSetting("exefile", exefile);
+                }
             }
             ResultPredict.Clear();
 
@@ -236,12 +338,46 @@ namespace VisualExp
 
             GenerateTest();
 
-            Process p = new Process();
-            p.StartInfo = new ProcessStartInfo(exefile, txtCommand.Text);
-            p.Start();
-            p.WaitForExit();
+            if (Config.args.Contains("-matlab"))
+            {
+                this.Close();
+                return;
+            }
+
+            int visual = 0;
+
+            string[] cmd_list = txtCommand.Text.Split(new char[] { '\n' });
+            for(int i = 0; i < cmd_list.Length; i++)
+            {
+                if (cmd_list[i].Contains("-visual 2"))
+                    visual = 2;
+                if(cmd_list[i].Contains(".exe"))
+                {
+                    string[] cmd_args = cmd_list[i].Split(new char[] { ' ' }, 2);
+                    Process p = new Process();
+                    //MessageBox.Show(cmd_args[0] + ".." + cmd_args[1]);
+                    p.StartInfo = new ProcessStartInfo(cmd_args[0], cmd_args[1]);
+                    //p.StartInfo.UseShellExecute = false;
+                    //p.StartInfo.RedirectStandardOutput = true;
+                    p.Start();
+                    //string output = p.StandardOutput.ReadToEnd();
+                    //MessageBox.Show(output);
+                    p.WaitForExit();
+                    //Thread.Sleep(2000);
+                }
+                else
+                {
+                    Process p = new Process();
+                    p.StartInfo = new ProcessStartInfo(exefile, cmd_list[i]);
+                    p.Start();
+                    p.WaitForExit();
+                }
+
+            }
 
             LoadPredict();
+            if (visual == 2)
+                LoadDraw();
             picData.Refresh();
         }
 
