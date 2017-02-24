@@ -13,18 +13,13 @@ using Ultilities;
 
 namespace VisualExp
 {
-    struct Node
-    {
-        public double X;
-        public double Y;
-        public int Label;
-        public Node(double x, double y, int label) { X = x; Y = y; Label = label; }
-    }
     public partial class MainFrm : Form
     {
         List<Node> TrainingSet;
         List<Node> ResultPredict;
+        List<Node> raw_ResultPredict;
         List<Node> DrawSet;
+        List<Node> raw_DrawSet;
 
         Color[] FColorMap;
         Color[] BColorMap;
@@ -39,6 +34,7 @@ namespace VisualExp
         public MainFrm()
         {
             InitializeComponent();
+
             this.Text = getAppSetting("exefile").Split(new char[] { '.' })[0];
             if (this.Text == "")
                 this.Text = "VisualExp";
@@ -47,18 +43,37 @@ namespace VisualExp
             TrainingSet = new List<Node>();
             ResultPredict = new List<Node>();
             DrawSet = new List<Node>();
+            raw_DrawSet = new List<Node>();
+            raw_ResultPredict = new List<Node>();
 
-            FColorMap = new Color[12] { Color.Black, Color.Red, Color.Green, Color.Blue,
-                                        Color.Magenta, Color.Gold, Color.Brown, Color.Purple,
+            FColorMap = new Color[] { Color.Black, Color.Red, Color.DarkGreen, Color.Blue,
+                                         Color.BlueViolet, Color.Teal, Color.Gold, Color.Brown, Color.Purple,
                                         Color.Chocolate, Color.GhostWhite, Color.LightPink, Color.Salmon};
-            BColorMap = new Color[4] { Color.Gray, Color.DarkRed, Color.DarkGreen, Color.DarkBlue };
+            BColorMap = new Color[] { Color.Gray, Color.LightSalmon, Color.YellowGreen, Color.SteelBlue,
+                                    Color.Violet, Color.LightSeaGreen,
+                                    ColorTranslator.FromHtml("#EF3054"), Color.DarkGreen, Color.Red, Color.DarkCyan, Color.GreenYellow, Color.HotPink };
             cbColor.SelectedIndex = 0;
             cbType.SelectedIndex = 0;
             w = picData.Size.Width;
             h = picData.Size.Height;
             b = new Bitmap(w + 1, h + 1);
-            wStep = 2.0 / w;
-            hStep = 2.0 / h;
+            if (Config.args.Contains("-nonscale"))
+            {
+                int idx = Config.args.IndexOf("-nonscale");
+                double max = w;
+                try
+                {
+                    max = Int32.Parse(Config.args[idx + 1]);
+                }
+                catch {  } 
+                wStep = max / w;
+                hStep = max / h;
+            }
+            else
+            {
+                wStep = 2.0 / w;
+                hStep = 2.0 / h;
+            }
 
             if (Config.args.Contains("-preload"))
             {
@@ -103,10 +118,10 @@ namespace VisualExp
                 double y = -1;
                 for (int j = 0; j <= h; j++)
                 {
-                    y = -1 + j * hStep;
+                    y = -hStep * h / 2 + j * hStep;
                     for (int i = 0; i <= w; i++)
                     {
-                        x = -1 + i * wStep;
+                        x = -wStep * w / 2 + i * wStep;
                         writer.WriteLine("0 1:{0} 2:{1}", x, y);
                     }
                 }
@@ -117,6 +132,8 @@ namespace VisualExp
         private void LoadPredict()
         {
             StreamReader reader = new StreamReader("predict.txt");
+            ResultPredict.Clear();
+            raw_ResultPredict.Clear();
             while (!reader.EndOfStream)
             {
                 if (chkRegression.Checked)
@@ -150,6 +167,7 @@ namespace VisualExp
                     int i = (int)Math.Round(x / wStep, 0);
                     int j = (int)Math.Round(y / hStep, 0);
                     ResultPredict.Add(new Node(i + w / 2, h / 2 - j, label));
+                    raw_ResultPredict.Add(new Node(x,y,label));
                 }
             }
             reader.Close();
@@ -160,6 +178,7 @@ namespace VisualExp
         {
             StreamReader reader = new StreamReader("draw.txt");
             DrawSet.Clear();
+            raw_DrawSet.Clear();
             while (!reader.EndOfStream)
             {
                 if (chkRegression.Checked)
@@ -174,7 +193,11 @@ namespace VisualExp
                 else
                 {
                     string[] stArr = reader.ReadLine().Split(new char[] { ' ' });
-                    int label = (int)Double.Parse(stArr[0]);
+                    string[] stLabel = stArr[0].Split(new char[] { ',' });
+                    int label = (int)Double.Parse(stLabel[0]);
+                    int group = -1;
+                    if(stLabel.Length > 1)
+                        group = (int)Double.Parse(stLabel[1]);
                     double x, y;
                     if (Double.Parse(stArr[1].Split(new char[] { ':' })[0]) == 1)
                     {
@@ -191,7 +214,8 @@ namespace VisualExp
                     }
                     int i = (int)Math.Round(x / wStep, 0);
                     int j = (int)Math.Round(y / hStep, 0);
-                    DrawSet.Add(new Node(i + w / 2, h / 2 - j, label));
+                    DrawSet.Add(new Node(i + w / 2, h / 2 - j, label, group));
+                    raw_DrawSet.Add(new Node(x, y, label, group));
                 }
             }
             reader.Close();
@@ -241,39 +265,109 @@ namespace VisualExp
 
         private void picData_Paint(object sender, PaintEventArgs e)
         {
-            Graphics g = e.Graphics;
-            //if (ReDrawPredict)
+            try
             {
-                ReDrawPredict = false;
-                foreach (Node p in ResultPredict)
+                Graphics g = e.Graphics;
+                g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
+                //if (ReDrawPredict)
                 {
-                    Color c;
-                    if (chkMulti.Checked)
-                        c = BColorMap[p.Label + 1];
-                    else
-                        c = p.Label == 1 ? BColorMap[1] : BColorMap[2];
-                    g.DrawLine(new Pen(c), (int)p.X, (int)p.Y, (int)p.X + 1, (int)p.Y);
+                    ReDrawPredict = false;
+                    foreach (Node p in ResultPredict)
+                    {
+                        Color c;
+                        if (chkMulti.Checked)
+                            c = BColorMap[p.Label + 1];
+                        else
+                            c = p.Label == 1 ? BColorMap[1] : BColorMap[2];
+                        g.DrawLine(new Pen(c), (int)p.X, (int)p.Y, (int)p.X + 1, (int)p.Y);
+                    }
                 }
-            }
 
-            foreach (Node p in TrainingSet)
+                foreach (Node p in TrainingSet)
+                {
+                    int i = (int)Math.Round(p.X / wStep, 0);
+                    int j = (int)Math.Round(p.Y / hStep, 0);
+                    g.FillEllipse(new SolidBrush(FColorMap[p.Label]), i + w / 2 - 2, h / 2 - j - 2, 4, 4);
+                }
+
+                foreach (Node p in DrawSet)
+                {
+                    int marker_w = 6;
+                    int marker_hw = 3;
+                    int marker_iw = 1;
+                    int marker_p = 3;
+                    switch (p.Group)
+                    {
+                        case -1:
+                            g.FillRectangle(new SolidBrush(FColorMap[p.Label + 1]),
+                                        (int)p.X - 2, (int)p.Y - 2, 4, 4);
+                            break;
+                        case 0:
+                            g.FillEllipse(new SolidBrush(FColorMap[p.Label + 1]),
+                                (int)p.X - marker_p, (int)p.Y - marker_p, marker_w, marker_w);
+                            break;
+                        case 1:
+                            g.FillRectangle(new SolidBrush(FColorMap[p.Label + 1]),
+                                (int)p.X - marker_p, (int)p.Y - marker_p, marker_w, marker_w);
+                            break;
+                        case 2:
+                            g.FillPolygon(new SolidBrush(FColorMap[p.Label + 1]),
+                                new Point[] { new Point((int)p.X - marker_hw - marker_iw, (int)p.Y),
+                                          new Point((int)p.X, (int)p.Y  - marker_hw -marker_iw),
+                                          new Point((int)p.X + marker_hw + marker_iw, (int)p.Y),
+                                          new Point((int)p.X, (int)p.Y  + marker_hw + marker_iw),
+                                            });
+                            break;
+                        case 3:
+                            g.FillPolygon(new SolidBrush(FColorMap[p.Label + 1]),
+                                new Point[] { new Point((int)p.X - marker_hw - marker_iw, (int)p.Y + marker_hw + marker_iw),
+                                          new Point((int)p.X, (int)p.Y  - marker_hw - marker_iw),
+                                          new Point((int)p.X + marker_hw + marker_iw, (int)p.Y + marker_hw + marker_iw),
+                                            });
+                            break;
+                        case 4:
+                            g.FillPolygon(new SolidBrush(FColorMap[p.Label + 1]),
+                                new Point[] { new Point((int)p.X - marker_hw - marker_iw, (int)p.Y - marker_hw - marker_iw),
+                                          new Point((int)p.X, (int)p.Y  + marker_hw + marker_iw),
+                                          new Point((int)p.X + marker_hw + marker_iw, (int)p.Y - marker_hw - marker_iw),
+                                            });
+                            break;
+                        case 5:
+                            g.FillPolygon(new SolidBrush(FColorMap[p.Label + 1]),
+                                new Point[] { new Point((int)p.X - marker_hw - marker_iw, (int)p.Y),
+                                          new Point((int)p.X + marker_hw + marker_iw, (int)p.Y - marker_hw - marker_iw),
+                                          new Point((int)p.X + marker_hw + marker_iw, (int)p.Y + marker_hw + marker_iw),
+                                            });
+                            break;
+                        case 6:
+                            g.FillPolygon(new SolidBrush(FColorMap[p.Label + 1]),
+                                new Point[] { new Point((int)p.X + marker_hw + marker_iw, (int)p.Y),
+                                          new Point((int)p.X - marker_hw - marker_iw, (int)p.Y - marker_hw - marker_iw),
+                                          new Point((int)p.X - marker_hw - marker_iw, (int)p.Y + marker_hw + marker_iw),
+                                            });
+                            break;
+                    }
+
+                }
+
+            }
+            catch (Exception ex)
             {
-                int i = (int)Math.Round(p.X / wStep, 0);
-                int j = (int)Math.Round(p.Y / hStep, 0);
-                g.DrawEllipse(new Pen(FColorMap[p.Label]), i + w / 2 - 2, h / 2 - j - 2, 4, 4);
+                int k = 1;
             }
-
-            foreach (Node p in DrawSet)
-            {
-                g.FillRectangle(new SolidBrush(FColorMap[p.Label+1]),
-                    (int)p.X - 3, (int)p.Y - 3, 6, 6);
-            }
-
+  
         }
         
 
         private void picData_MouseUp(object sender, MouseEventArgs e)
         {
+            if(e.Button == MouseButtons.Right)
+            {
+                DataProcess.HideLabel(TrainingSet, 
+                    (e.X - w / 2) * wStep, (h / 2 - e.Y) * hStep, 30 * wStep);
+                picData.Refresh();
+                return;
+            }
             switch (cbType.SelectedIndex)
             {
                 case 0:
@@ -323,7 +417,9 @@ namespace VisualExp
             {
                 foreach (Node node in TrainingSet)
                 {
-                    string label = "?";
+                    // by default, binary prob does not have unlabel data
+                    // unlabeled data, by default is a multiclass prob
+                    string label = "-1";
                     if (node.Label > 0)
                     {
                         if (chkMulti.Checked)
@@ -333,6 +429,7 @@ namespace VisualExp
                     }
                     writer.WriteLine("{0} 1:{1} 2:{2}", label, node.X, node.Y);
                 }
+                DataProcess.SaveTrueLabel(TrainingSet);
             }
             writer.Close();
 
@@ -421,5 +518,41 @@ namespace VisualExp
             config.Save(ConfigurationSaveMode.Modified);
         }
 
+        private void nmZoom_ValueChanged(object sender, EventArgs e)
+        {
+            wStep /= (double)nmZoom.Value;
+            hStep /= (double)nmZoom.Value;
+            List<Node> tmp_DrawSet = new List<Node>();
+            for(int iter = 0; iter < raw_DrawSet.Count; iter++)
+            {
+                int i = (int)Math.Round(raw_DrawSet[iter].X / wStep, 0);
+                int j = (int)Math.Round(raw_DrawSet[iter].Y / hStep, 0);
+                tmp_DrawSet.Add(new Node(i + w / 2, h / 2 - j, DrawSet[iter].Label, DrawSet[iter].Group));
+            }
+            DrawSet = tmp_DrawSet;
+
+            List<Node> tmp_predict = new List<Node>();
+            for (int iter = 0; iter < raw_ResultPredict.Count; iter++)
+            {
+                int i = (int)Math.Round(raw_ResultPredict[iter].X / wStep, 0);
+                int j = (int)Math.Round(raw_ResultPredict[iter].Y / hStep, 0);
+                tmp_predict.Add(new Node(i + w / 2, h / 2 - j, ResultPredict[iter].Label));
+            }
+            ResultPredict = tmp_predict;
+
+            picData.Refresh();
+        }
+
+        private void nmHideLabel_ValueChanged(object sender, EventArgs e)
+        {
+            DataProcess.HideLabel(TrainingSet, (double)nmHideLabel.Value / 100.0);
+            picData.Refresh();
+        }
+
+        private void MainFrm_Load(object sender, EventArgs e)
+        {
+            cbColor.SelectedIndex = 1;
+            cbType.SelectedIndex = 1;
+        }
     }
 }
